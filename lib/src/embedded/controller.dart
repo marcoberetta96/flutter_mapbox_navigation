@@ -34,6 +34,11 @@ class MapBoxNavigationViewController {
       .then((dynamic result) => result as String);
 
   ///Total distance remaining in meters along route.
+  Future<bool> get setPOIImage => _methodChannel
+      .invokeMethod<bool>('setPOIImage')
+      .then<bool>((dynamic result) => result as bool);
+
+  ///Total distance remaining in meters along route.
   Future<double> get distanceRemaining => _methodChannel
       .invokeMethod<double>('getDistanceRemaining')
       .then((dynamic result) => result as double);
@@ -95,6 +100,64 @@ class MapBoxNavigationViewController {
         .then((dynamic result) => result as bool);
   }
 
+  ///Build the Route Used for the Navigation
+  ///
+  /// [wayPoints] must not be null. A collection of [WayPoint](longitude, latitude and name). Must be at least 2 or at most 25. Cannot use drivingWithTraffic mode if more than 3-waypoints.
+  /// [options] options used to generate the route and used while navigating
+  ///
+  Future<bool> setPOI(
+      {required String groupName,
+        required String image,
+        required double iconSize,
+        required List<WayPoint> wayPoints}) async {
+    assert(wayPoints.isNotEmpty);
+
+    List<Map<String, Object?>> pointList = [];
+
+    for (int i = 0; i < wayPoints.length; i++) {
+      var wayPoint = wayPoints[i];
+      assert(wayPoint.name != null);
+      assert(wayPoint.latitude != null);
+      assert(wayPoint.longitude != null);
+
+      final pointMap = <String, dynamic>{
+        "Order": i,
+        "Id": wayPoint.id,
+        "Name": wayPoint.name,
+        "Latitude": wayPoint.latitude,
+        "Longitude": wayPoint.longitude,
+      };
+      pointList.add(pointMap);
+    }
+    var i = 0;
+    var wayPointMap =
+    Map.fromIterable(pointList, key: (e) => i++, value: (e) => e);
+
+    Map<String, dynamic> args = Map<String, dynamic>();
+    args["group"] = groupName;
+    args["icon"] = image;
+    args["iconSize"] = iconSize;
+    args["poi"] = wayPointMap;
+
+    return await _methodChannel
+        .invokeMethod('setPOIs', args)
+        .then<bool>((dynamic result) => result as bool);
+  }
+
+  ///Build the Route Used for the Navigation
+  ///
+  /// [wayPoints] must not be null. A collection of [WayPoint](longitude, latitude and name). Must be at least 2 or at most 25. Cannot use drivingWithTraffic mode if more than 3-waypoints.
+  /// [options] options used to generate the route and used while navigating
+  ///
+  Future<bool> removePOI({required String groupName}) async {
+    Map<String, dynamic> args = Map<String, dynamic>();
+    args["group"] = groupName;
+
+    return await _methodChannel
+        .invokeMethod('removePOIs', args)
+        .then<bool>((dynamic result) => result as bool);
+  }
+
   /// starts listening for events
   Future<void> initialize() async {
     _routeEventSubscription = _streamRouteEvent!.listen(_onProgressData);
@@ -153,6 +216,7 @@ class MapBoxNavigationViewController {
 
   RouteEvent _parseRouteEvent(String jsonString) {
     RouteEvent event;
+    // if(jsonString.contains('progress_change')) return;
     final map = json.decode(jsonString) as Map<String, dynamic>;
     final progressEvent = RouteProgressEvent.fromJson(map);
     if (progressEvent.isProgressEvent!) {

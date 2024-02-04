@@ -10,6 +10,7 @@ class WayPoint {
     required this.latitude,
     required this.longitude,
     this.isSilent = false,
+    this.id,
   });
 
   /// create [WayPoint] from a json
@@ -28,6 +29,9 @@ class WayPoint {
       isSilent = json['isSilent'] as bool;
     }
   }
+
+  /// Waypoint [id]
+  String? id;
 
   /// Waypoint [name]
   String? name;

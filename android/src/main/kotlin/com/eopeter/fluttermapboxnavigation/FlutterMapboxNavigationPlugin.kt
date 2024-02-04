@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import com.eopeter.fluttermapboxnavigation.activity.NavigationLauncher
 import com.eopeter.fluttermapboxnavigation.factory.EmbeddedNavigationViewFactory
 import com.eopeter.fluttermapboxnavigation.models.Waypoint
 import com.mapbox.api.directions.v5.DirectionsCriteria
@@ -89,157 +88,8 @@ class FlutterMapboxNavigationPlugin : FlutterPlugin, MethodCallHandler,
             "getDurationRemaining" -> {
                 result.success(durationRemaining)
             }
-            "startFreeDrive" -> {
-                enableFreeDriveMode = true
-                checkPermissionAndBeginNavigation(call)
-            }
-            "startNavigation" -> {
-                enableFreeDriveMode = false
-                checkPermissionAndBeginNavigation(call)
-            }
-            "addWayPoints" -> {
-                addWayPointsToNavigation(call, result)
-            }
-            "finishNavigation" -> {
-                NavigationLauncher.stopNavigation(currentActivity)
-            }
-            "enableOfflineRouting" -> {
-                downloadRegionForOfflineRouting(call, result)
-            }
             else -> result.notImplemented()
         }
-    }
-
-    private fun downloadRegionForOfflineRouting(
-        call: MethodCall,
-        result: Result
-    ) {
-        result.error("TODO", "Not Implemented in Android", "will implement soon")
-    }
-
-    private fun checkPermissionAndBeginNavigation(
-        call: MethodCall
-    ) {
-        val arguments = call.arguments as? Map<String, Any>
-
-        val navMode = arguments?.get("mode") as? String
-        if (navMode != null) {
-            when (navMode) {
-                "walking" -> navigationMode = DirectionsCriteria.PROFILE_WALKING
-                "cycling" -> navigationMode = DirectionsCriteria.PROFILE_CYCLING
-                "driving" -> navigationMode = DirectionsCriteria.PROFILE_DRIVING
-            }
-        }
-
-        val alternateRoutes = arguments?.get("alternatives") as? Boolean
-        if (alternateRoutes != null) {
-            showAlternateRoutes = alternateRoutes
-        }
-
-        val simulated = arguments?.get("simulateRoute") as? Boolean
-        if (simulated != null) {
-            simulateRoute = simulated
-        }
-
-        val allowsUTurns = arguments?.get("allowsUTurnsAtWayPoints") as? Boolean
-        if (allowsUTurns != null) {
-            allowsUTurnsAtWayPoints = allowsUTurns
-        }
-
-        val onMapTap = arguments?.get("enableOnMapTapCallback") as? Boolean
-        if (onMapTap != null) {
-            enableOnMapTapCallback = onMapTap
-        }
-
-        val language = arguments?.get("language") as? String
-        if (language != null) {
-            navigationLanguage = language
-        }
-
-        val voiceEnabled = arguments?.get("voiceInstructionsEnabled") as? Boolean
-        if (voiceEnabled != null) {
-            voiceInstructionsEnabled = voiceEnabled
-        }
-
-        val bannerEnabled = arguments?.get("bannerInstructionsEnabled") as? Boolean
-        if (bannerEnabled != null) {
-            bannerInstructionsEnabled = bannerEnabled
-        }
-
-        val units = arguments?.get("units") as? String
-
-        if (units != null) {
-            if (units == "imperial") {
-                navigationVoiceUnits = DirectionsCriteria.IMPERIAL
-            } else if (units == "metric") {
-                navigationVoiceUnits = DirectionsCriteria.METRIC
-            }
-        }
-
-        mapStyleUrlDay = arguments?.get("mapStyleUrlDay") as? String
-        mapStyleUrlNight = arguments?.get("mapStyleUrlNight") as? String
-
-        val longPress = arguments?.get("longPressDestinationEnabled") as? Boolean
-        if (longPress != null) {
-            longPressDestinationEnabled = longPress
-        }
-
-        wayPoints.clear()
-
-        if (enableFreeDriveMode) {
-            checkPermissionAndBeginNavigation(wayPoints)
-            return
-        }
-
-        val points = arguments?.get("wayPoints") as HashMap<Int, Any>
-        for (item in points) {
-            val point = item.value as HashMap<*, *>
-            val name = point["Name"] as String
-            val latitude = point["Latitude"] as Double
-            val longitude = point["Longitude"] as Double
-            val isSilent = point["IsSilent"] as Boolean
-            wayPoints.add(Waypoint(name, longitude, latitude, isSilent))
-        }
-        checkPermissionAndBeginNavigation(wayPoints)
-    }
-
-    private fun checkPermissionAndBeginNavigation(wayPoints: List<Waypoint>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val haspermission =
-                currentActivity?.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-            if (haspermission != PackageManager.PERMISSION_GRANTED) {
-                //_activity.onRequestPermissionsResult((a,b,c) => onRequestPermissionsResult)
-                currentActivity?.requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    PERMISSION_REQUEST_CODE
-                )
-                beginNavigation(wayPoints)
-            } else
-                beginNavigation(wayPoints)
-        } else
-            beginNavigation(wayPoints)
-    }
-
-    private fun beginNavigation(wayPoints: List<Waypoint>) {
-        NavigationLauncher.startNavigation(currentActivity, wayPoints)
-    }
-
-    private fun addWayPointsToNavigation(
-        call: MethodCall,
-        result: Result
-    ) {
-        val arguments = call.arguments as? Map<String, Any>
-        val points = arguments?.get("wayPoints") as HashMap<Int, Any>
-
-        for (item in points) {
-            val point = item.value as HashMap<*, *>
-            val name = point["Name"] as String
-            val latitude = point["Latitude"] as Double
-            val longitude = point["Longitude"] as Double
-            val isSilent = point["IsSilent"] as Boolean
-            wayPoints.add(Waypoint(name, latitude, longitude, isSilent))
-        }
-        NavigationLauncher.addWayPoints(currentActivity, wayPoints)
     }
 
     override fun onListen(args: Any?, events: EventChannel.EventSink?) {
@@ -278,35 +128,6 @@ class FlutterMapboxNavigationPlugin : FlutterPlugin, MethodCallHandler,
 
     override fun onDetachedFromActivityForConfigChanges() {
         // To change body of created functions use File | Settings | File Templates.
-    }
-
-    fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            367 -> {
-                for (permission in permissions) {
-                    if (permission == Manifest.permission.ACCESS_FINE_LOCATION) {
-                        val haspermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            currentActivity?.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        } else {
-                            TODO("VERSION.SDK_INT < M")
-                        }
-                        if (haspermission == PackageManager.PERMISSION_GRANTED) {
-                            if (wayPoints.isNotEmpty())
-                                beginNavigation(wayPoints)
-                        }
-                        // Not all permissions granted. Show some message and return.
-                        return
-                    }
-                }
-
-                // All permissions are granted. Do the work accordingly.
-            }
-        }
-        // super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }
 
