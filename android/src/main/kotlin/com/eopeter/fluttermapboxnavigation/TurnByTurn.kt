@@ -388,14 +388,15 @@ open class TurnByTurn(
         //binding.tripProgressCard.visibility = View.INVISIBLE
         //binding.tripProgressView.visibility = View.INVISIBLE
         //binding.stop.visibility = View.INVISIBLE
-        binding.maneuverView.visibility = View.VISIBLE
-        binding.soundButton.visibility = View.VISIBLE
-        binding.routeOverview.visibility = View.VISIBLE
-        binding.recenter.visibility = View.VISIBLE
+        // binding.maneuverView.visibility = View.VISIBLE
+        //binding.soundButton.visibility = View.INVISIBLE
+        //binding.routeOverview.visibility = View.INVISIBLE
+        //binding.recenter.visibility = View.INVISIBLE
         //binding.speedLimitView.visibility = View.INVISIBLE
     }
 
     private fun finishNavigation(isOffRouted: Boolean = false) {
+        Log.d("MARCO", "finishNavigation")
         MapboxNavigationApp.current()!!.stopTripSession()
         this.isNavigationCanceled = true
         PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_CANCELLED)
@@ -648,7 +649,7 @@ open class TurnByTurn(
         }
 
         override fun onWaypointArrival(routeProgress: RouteProgress) {
-            // not impl
+            PluginUtilities.sendEvent(MapBoxEvents.WAY_POINT_ON_ARRIVAL)
         }
     }
 

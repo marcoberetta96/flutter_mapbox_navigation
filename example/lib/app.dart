@@ -346,7 +346,7 @@ class _SampleNavigationAppState extends State<SampleNavigationApp> {
                             },
                       child: const Text("Free Drive "),
                     ),
-                    const Center(
+                    if(false)const Center(
                       child: Padding(
                         padding: EdgeInsets.all(10),
                         child: Text(
@@ -355,7 +355,7 @@ class _SampleNavigationAppState extends State<SampleNavigationApp> {
                         ),
                       ),
                     ),
-                    Container(
+                    if(false)Container(
                       color: Colors.grey,
                       width: double.infinity,
                       child: Padding(
@@ -400,7 +400,7 @@ class _SampleNavigationAppState extends State<SampleNavigationApp> {
               ),
             ),
             SizedBox(
-              height: 700,
+              height: 800,
               child: Container(
                 color: Colors.grey,
                 child: MapBoxNavigationView(
@@ -419,7 +419,7 @@ class _SampleNavigationAppState extends State<SampleNavigationApp> {
     );
   }
 
-  Future<void> _onEmbeddedRouteEvent(e) async {
+  Future<void> _onEmbeddedRouteEvent(RouteEvent e) async {
     _distanceRemaining = await MapBoxNavigation.instance.getDistanceRemaining();
     _durationRemaining = await MapBoxNavigation.instance.getDurationRemaining();
 
@@ -458,6 +458,11 @@ class _SampleNavigationAppState extends State<SampleNavigationApp> {
           _routeBuilt = false;
           _isNavigating = false;
         });
+        break;
+      case MapBoxEvent.annotation_tapped:
+        debugPrint("TEST ==> ${e.toString()}");
+        debugPrint("TEST ==> ${e.data}");
+        debugPrint("TEST ==> ${e.data.toString()}");
         break;
       default:
         break;

@@ -17,6 +17,7 @@ enum class MapBoxEvents(val value: String) {
     SPEECH_ANNOUNCEMENT("speech_announcement"),
     BANNER_INSTRUCTION("banner_instruction"),
     ON_ARRIVAL("on_arrival"),
+    WAY_POINT_ON_ARRIVAL("way_point_on_arrival"),
     FAILED_TO_REROUTE("failed_to_reroute"),
     REROUTE_ALONG("reroute_along"),
     ON_MAP_TAP("on_map_tap"),

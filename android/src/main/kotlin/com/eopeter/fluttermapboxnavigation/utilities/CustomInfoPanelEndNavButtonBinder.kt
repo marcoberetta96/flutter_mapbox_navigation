@@ -2,7 +2,6 @@ package com.eopeter.fluttermapboxnavigation.utilities
 
 import android.app.Activity
 import android.view.ViewGroup
-import com.eopeter.fluttermapboxnavigation.activity.NavigationLauncher
 import com.eopeter.fluttermapboxnavigation.models.MapBoxEvents
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationObserver
@@ -34,7 +33,9 @@ class CustomInfoPanelEndNavButtonBinder(
                 button.setOnClickListener {
                     mapboxNavigation.stopTripSession()
                     PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_CANCELLED)
-                    activity.finish()
+
+                    // Commented out to prevent activity to finish
+                    // activity.finish()
                 }
             }
         }
