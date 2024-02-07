@@ -13,6 +13,7 @@ enum class MapBoxEvents(val value: String) {
     NAVIGATION_RUNNING("navigation_running"),
     NAVIGATION_CANCELLED("navigation_cancelled"),
     NAVIGATION_FINISHED("navigation_finished"),
+    NAVIGATION_STOPPED("navigation_stopped"),
     FASTER_ROUTE_FOUND("faster_route_found"),
     SPEECH_ANNOUNCEMENT("speech_announcement"),
     BANNER_INSTRUCTION("banner_instruction"),

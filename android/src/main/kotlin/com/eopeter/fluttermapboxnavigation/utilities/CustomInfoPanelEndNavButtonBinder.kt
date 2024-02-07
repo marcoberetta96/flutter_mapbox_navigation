@@ -31,11 +31,11 @@ class CustomInfoPanelEndNavButtonBinder(
             override fun onAttached(mapboxNavigation: MapboxNavigation) {
                 super.onAttached(mapboxNavigation)
                 button.setOnClickListener {
-                    mapboxNavigation.stopTripSession()
-                    PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_CANCELLED)
-
-                    // Commented out to prevent activity to finish
-                    // activity.finish()
+                    PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_STOPPED)
+                    
+                    // mapboxNavigation.stopTripSession()
+                    // PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_CANCELLED)
+                    // activity.finish() // Commented out to prevent activity to finish
                 }
             }
         }
