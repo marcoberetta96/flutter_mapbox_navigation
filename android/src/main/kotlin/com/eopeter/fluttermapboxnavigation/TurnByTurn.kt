@@ -13,7 +13,9 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -112,6 +114,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.*
 import com.mapbox.maps.viewannotation.viewAnnotationOptions
 import com.eopeter.fluttermapboxnavigation.databinding.MapboxItemViewAnnotationBinding
+import com.mapbox.navigation.dropin.infopanel.InfoPanelBinder
 
 
 open class TurnByTurn(
@@ -145,7 +148,32 @@ open class TurnByTurn(
         registerObservers()
         mapboxNavigation = MapboxNavigationApp.current()!!
         mapboxNavigation.startTripSession(withForegroundService = false)
+
+
+        // Hide info panel
+        binding.navigationView.customizeViewBinders {
+            infoPanelBinder = CustomInfoPanelBinder()
+        }
     }
+
+    class CustomInfoPanelBinder : InfoPanelBinder() {
+        override fun onCreateLayout(
+            layoutInflater: LayoutInflater,
+            root: ViewGroup
+        ): ViewGroup {
+            return layoutInflater.inflate(
+                R.layout.mapbox_layout_info_panel, root,
+                false
+            ) as ViewGroup
+        }
+
+        override fun getHeaderLayout(layout: ViewGroup): ViewGroup? =
+            layout.findViewById(R.id.infoPanelHeader)
+
+        override fun getContentLayout(layout: ViewGroup): ViewGroup? =
+            layout.findViewById(R.id.infoPanelContent)
+    }
+
 
     override fun onMethodCall(methodCall: MethodCall, result: MethodChannel.Result) {
         when (methodCall.method) {
@@ -388,7 +416,7 @@ open class TurnByTurn(
         //binding.tripProgressCard.visibility = View.INVISIBLE
         //binding.tripProgressView.visibility = View.INVISIBLE
         //binding.stop.visibility = View.INVISIBLE
-        // binding.maneuverView.visibility = View.VISIBLE
+        //binding.maneuverView.visibility = View.VISIBLE
         //binding.soundButton.visibility = View.INVISIBLE
         //binding.routeOverview.visibility = View.INVISIBLE
         //binding.recenter.visibility = View.INVISIBLE
