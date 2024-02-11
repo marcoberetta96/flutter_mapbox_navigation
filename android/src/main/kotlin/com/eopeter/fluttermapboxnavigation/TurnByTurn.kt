@@ -4,21 +4,15 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.content.res.AssetManager
-import android.content.res.Configuration
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.eopeter.fluttermapboxnavigation.databinding.MapboxItemViewAnnotationBinding
 import com.eopeter.fluttermapboxnavigation.databinding.NavigationActivityBinding
 import com.eopeter.fluttermapboxnavigation.models.MapBoxEvents
 import com.eopeter.fluttermapboxnavigation.models.MapBoxRouteProgressEvent
@@ -27,94 +21,31 @@ import com.eopeter.fluttermapboxnavigation.models.WaypointSet
 import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelEndNavButtonBinder
 import com.eopeter.fluttermapboxnavigation.utilities.PluginUtilities
 import com.google.gson.Gson
-import com.mapbox.maps.Style
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.RouteOptions
-import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
-import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.maps.plugin.animation.MapAnimationOptions
-import com.mapbox.maps.plugin.animation.camera
-import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.*
 import com.mapbox.maps.plugin.compass.compass
-import com.mapbox.maps.plugin.delegates.listeners.OnCameraChangeListener
-import com.mapbox.maps.plugin.delegates.listeners.OnMapIdleListener
-import com.mapbox.maps.plugin.gestures.OnMapClickListener
-import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.scalebar.scalebar
-import com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
-import com.mapbox.navigation.base.TimeFormat
+import com.mapbox.maps.viewannotation.viewAnnotationOptions
 import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
 import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.base.route.*
-import com.mapbox.navigation.base.route.NavigationRoute
-import com.mapbox.navigation.base.route.NavigationRouterCallback
-import com.mapbox.navigation.base.route.RouterFailure
-import com.mapbox.navigation.base.route.RouterOrigin
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.navigation.base.trip.model.RouteProgress
-import com.mapbox.navigation.base.trip.model.eh.EHorizonPosition
-import com.mapbox.navigation.base.trip.model.roadobject.RoadObject
-import com.mapbox.navigation.base.trip.model.roadobject.RoadObjectEnterExitInfo
-import com.mapbox.navigation.base.trip.model.roadobject.RoadObjectPassInfo
-import com.mapbox.navigation.base.trip.model.roadobject.distanceinfo.RoadObjectDistanceInfo
 import com.mapbox.navigation.core.MapboxNavigation
-import com.mapbox.navigation.core.MapboxNavigationProvider
 import com.mapbox.navigation.core.arrival.ArrivalObserver
 import com.mapbox.navigation.core.directions.session.RoutesObserver
-import com.mapbox.navigation.core.formatter.MapboxDistanceFormatter
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
-import com.mapbox.navigation.core.lifecycle.MapboxNavigationObserver
-import com.mapbox.navigation.core.lifecycle.requireMapboxNavigation
-import com.mapbox.navigation.core.replay.MapboxReplayer
-import com.mapbox.navigation.core.replay.ReplayLocationEngine
-import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
-import com.mapbox.navigation.core.routealternatives.NavigationRouteAlternativesObserver
-import com.mapbox.navigation.core.routealternatives.RouteAlternativesError
 import com.mapbox.navigation.core.trip.session.*
-import com.mapbox.navigation.core.trip.session.LocationMatcherResult
-import com.mapbox.navigation.core.trip.session.LocationObserver
-import com.mapbox.navigation.core.trip.session.RouteProgressObserver
-import com.mapbox.navigation.core.trip.session.VoiceInstructionsObserver
-import com.mapbox.navigation.core.trip.session.eh.EHorizonObserver
-import com.mapbox.navigation.ui.base.util.MapboxNavigationConsumer
-import com.mapbox.navigation.ui.maneuver.api.MapboxManeuverApi
-import com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
-import com.mapbox.navigation.ui.maps.camera.NavigationCamera
-import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
-import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
-import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
-import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
-import com.mapbox.navigation.ui.maps.camera.view.MapboxRecenterButton
-import com.mapbox.navigation.ui.maps.camera.view.MapboxRouteOverviewButton
-import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
-import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
-import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowView
-import com.mapbox.navigation.ui.maps.route.arrow.model.RouteArrowOptions
-import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
-import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
-import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
-import com.mapbox.navigation.ui.tripprogress.api.MapboxTripProgressApi
+import com.mapbox.navigation.dropin.infopanel.InfoPanelBinder
 import com.mapbox.navigation.ui.tripprogress.model.*
-import com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
-import com.mapbox.navigation.ui.voice.api.MapboxSpeechApi
-import com.mapbox.navigation.ui.voice.api.MapboxVoiceInstructionsPlayer
-import com.mapbox.navigation.ui.voice.model.SpeechAnnouncement
-import com.mapbox.navigation.ui.voice.model.SpeechError
-import com.mapbox.navigation.ui.voice.model.SpeechValue
-import com.mapbox.navigation.ui.voice.model.SpeechVolume
-import com.mapbox.navigation.ui.voice.view.MapboxSoundButton
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.*
-import com.mapbox.maps.viewannotation.viewAnnotationOptions
-import com.eopeter.fluttermapboxnavigation.databinding.MapboxItemViewAnnotationBinding
-import com.mapbox.navigation.dropin.infopanel.InfoPanelBinder
 
 
 open class TurnByTurn(
@@ -149,7 +80,6 @@ open class TurnByTurn(
         mapboxNavigation = MapboxNavigationApp.current()!!
         mapboxNavigation.startTripSession(withForegroundService = false)
 
-
         // Hide info panel
         binding.navigationView.customizeViewBinders {
             infoPanelBinder = CustomInfoPanelBinder()
@@ -157,21 +87,11 @@ open class TurnByTurn(
     }
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
-        override fun onCreateLayout(
-            layoutInflater: LayoutInflater,
-            root: ViewGroup
-        ): ViewGroup {
-            return layoutInflater.inflate(
-                R.layout.mapbox_layout_info_panel, root,
-                false
-            ) as ViewGroup
+        override fun onCreateLayout(layoutInflater: LayoutInflater, root: ViewGroup): ViewGroup {
+            return layoutInflater.inflate(R.layout.mapbox_layout_info_panel, root, false) as ViewGroup
         }
-
-        override fun getHeaderLayout(layout: ViewGroup): ViewGroup? =
-            layout.findViewById(R.id.infoPanelHeader)
-
-        override fun getContentLayout(layout: ViewGroup): ViewGroup? =
-            layout.findViewById(R.id.infoPanelContent)
+        override fun getHeaderLayout(layout: ViewGroup): ViewGroup? = layout.findViewById(R.id.infoPanelHeader)
+        override fun getContentLayout(layout: ViewGroup): ViewGroup? = layout.findViewById(R.id.infoPanelContent)
     }
 
 
@@ -218,7 +138,6 @@ open class TurnByTurn(
 
     private fun buildRoute(methodCall: MethodCall, result: MethodChannel.Result) {
         this.isNavigationCanceled = false
-
         val arguments = methodCall.arguments as? Map<*, *>
         if (arguments != null) this.setOptions(arguments)
         this.addedWaypoints.clear()
@@ -251,10 +170,7 @@ open class TurnByTurn(
                 .voiceInstructions(voiceInstructionsEnabled)
                 .build(),
             callback = object : NavigationRouterCallback {
-                override fun onRoutesReady(
-                    routes: List<NavigationRoute>,
-                    routerOrigin: RouterOrigin
-                ) {
+                override fun onRoutesReady(routes: List<NavigationRoute>, routerOrigin: RouterOrigin) {
                     this@TurnByTurn.currentRoutes = routes
                     PluginUtilities.sendEvent(
                         MapBoxEvents.ROUTE_BUILT,
@@ -269,18 +185,10 @@ open class TurnByTurn(
                             CustomInfoPanelEndNavButtonBinder(activity)
                     }
                 }
-
-                override fun onFailure(
-                    reasons: List<RouterFailure>,
-                    routeOptions: RouteOptions
-                ) {
+                override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {
                     PluginUtilities.sendEvent(MapBoxEvents.ROUTE_BUILD_FAILED)
                 }
-
-                override fun onCanceled(
-                    routeOptions: RouteOptions,
-                    routerOrigin: RouterOrigin
-                ) {
+                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
                     PluginUtilities.sendEvent(MapBoxEvents.ROUTE_BUILD_CANCELLED)
                 }
             }
@@ -328,7 +236,6 @@ open class TurnByTurn(
 
     open fun setMapViewForAnnotation(mv: MapView) {
         mapViewForAnnotation = mv
-        Log.d("MARCO", "DONE setMapViewForAnnotation")
     }
 
     private fun addPOIs(methodCall: MethodCall, result: MethodChannel.Result) {
@@ -352,16 +259,13 @@ open class TurnByTurn(
 
             val image = BitmapFactory.decodeByteArray(poiImage, 0, poiImage!!.size)
             addPOIAnnotations(groupName!!, image, iconSize, poiPoints!!)
-
             Log.d("MARCO", "completed addPOIs")
-
         }
         result.success(true)
     }
 
     private fun removePOIs(methodCall: MethodCall, result: MethodChannel.Result) {
         val arguments = methodCall.arguments as? Map<*, *>
-
         if(arguments != null) {
             val groupName = arguments["group"] as? String
             removePOIsByGroupName(groupName!!)
@@ -387,7 +291,6 @@ open class TurnByTurn(
                 },
             )
             viewAnnotation.setOnClickListener { b ->
-                Log.d("MARCO", "DEBUG CLICCK !!")
                 PluginUtilities.sendEvent(MapBoxEvents.ANNOTATION_TAPPED, id)
 
             }
@@ -411,20 +314,9 @@ open class TurnByTurn(
         }
         this.binding.navigationView.api.startActiveGuidance(this.currentRoutes!!)
         PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_RUNNING)
-
-        // show/hide UI elements
-        //binding.tripProgressCard.visibility = View.INVISIBLE
-        //binding.tripProgressView.visibility = View.INVISIBLE
-        //binding.stop.visibility = View.INVISIBLE
-        //binding.maneuverView.visibility = View.VISIBLE
-        //binding.soundButton.visibility = View.INVISIBLE
-        //binding.routeOverview.visibility = View.INVISIBLE
-        //binding.recenter.visibility = View.INVISIBLE
-        //binding.speedLimitView.visibility = View.INVISIBLE
     }
 
     private fun finishNavigation(isOffRouted: Boolean = false) {
-        Log.d("MARCO", "finishNavigation")
         MapboxNavigationApp.current()!!.stopTripSession()
         this.isNavigationCanceled = true
         PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_CANCELLED)
