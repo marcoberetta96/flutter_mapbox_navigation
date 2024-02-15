@@ -26,4 +26,41 @@
 <!--        <item name="maneuverViewIconStyle">@style/MapboxCustomManeuverTurnIconStyle</item>-->
 <!--        <item name="laneGuidanceManeuverIconStyle">@style/MapboxCustomManeuverTurnIconStyle</item>-->
 <!--    </style>-->
+
+
+    <dimen name="mapbox_maneuver_step_distance_text_regular">12sp</dimen>
+    <dimen name="mapbox_maneuver_view_padding">4dp</dimen>
+    <dimen name="mapbox_maneuver_view_primary_text_regular">20sp</dimen>
+    <dimen name="mapbox_maneuver_view_secondary_text_regular">14sp</dimen>
+    <dimen name="mapbox_maneuver_view_sub_text_regular">8sp</dimen>
+
+    <style name="DropInStylePrimaryManeuver" parent="MapboxStylePrimaryManeuver">
+        <item name="android:textColor">@color/colorOnPrimary</item>
+        <item name="android:textSize">@dimen/mapbox_maneuver_view_primary_text_regular</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textDirection">locale</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="DropInStyleSecondaryManeuver" parent="MapboxStyleSecondaryManeuver">
+        <item name="android:textColor">@color/colorOnPrimary</item>
+        <item name="android:textSize">@dimen/mapbox_maneuver_view_secondary_text_regular</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textDirection">locale</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="DropInStyleSubManeuver" parent="MapboxStyleSubManeuver">
+        <item name="android:textColor">@color/colorOnPrimaryVariant</item>
+        <item name="android:textSize">@dimen/mapbox_maneuver_view_sub_text_regular</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textDirection">locale</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="DropInStyleTurnIconManeuver" parent="MapboxStyleTurnIconManeuver">
+        <item name="maneuverTurnIconColor">@android:color/white</item>
+        <item name="maneuverTurnIconShadowColor">@color/colorSecondary</item>
+    </style>
+
 </resources>
