@@ -92,6 +92,8 @@ dependencies {
     implementation "com.mapbox.navigation:ui-dropin:2.10.1"
     implementation "com.mapbox.navigation:android:2.10.1"
 
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-services:6.15.0'
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.jakewharton.timber:timber:4.7.1'
     implementation 'com.google.code.gson:gson:2.8.9'

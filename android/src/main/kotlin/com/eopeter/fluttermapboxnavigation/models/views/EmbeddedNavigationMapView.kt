@@ -76,7 +76,7 @@ class EmbeddedNavigationMapView(
         // Hide `SpeedLimit`, `RoadNameLabel` and `ActionButtons`
         val viewBinder = EmptyBinder()
         binding.navigationView.customizeViewBinders {
-            roadNameBinder = viewBinder
+//            roadNameBinder = viewBinder
             speedLimitBinder = viewBinder
             // actionButtonsBinder = viewBinder
         }
@@ -84,7 +84,6 @@ class EmbeddedNavigationMapView(
 
     private val mapViewObserver = object : MapViewObserver() {
         override fun onAttached(mapView: MapView) {
-            Log.d("MARCO", "DEBUG onAttached")
             super.onAttached(mapView)
             this@EmbeddedNavigationMapView.mapView2 = mapView
         }

@@ -22,7 +22,11 @@ import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelEndNavButton
 import com.eopeter.fluttermapboxnavigation.utilities.PluginUtilities
 import com.google.gson.Gson
 import com.mapbox.api.directions.v5.DirectionsCriteria
+import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
+import com.mapbox.api.matching.v5.models.MapMatchingMatching
+import com.mapbox.api.matching.v5.models.MapMatchingResponse
+import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.plugin.annotation.generated.*
@@ -36,6 +40,9 @@ import com.mapbox.navigation.base.route.*
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.navigation.base.trip.model.RouteProgress
 import com.mapbox.navigation.core.MapboxNavigation
+import com.mapbox.navigation.core.RoutesSetCallback
+import com.mapbox.navigation.core.RoutesSetError
+import com.mapbox.navigation.core.RoutesSetSuccess
 import com.mapbox.navigation.core.arrival.ArrivalObserver
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
@@ -84,6 +91,8 @@ open class TurnByTurn(
         binding.navigationView.customizeViewBinders {
             infoPanelBinder = CustomInfoPanelBinder()
         }
+
+        Log.d("MARCO", "COMPLETED initNavigation")
     }
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
@@ -105,6 +114,9 @@ open class TurnByTurn(
             }
             "buildRoute" -> {
                 this.buildRoute(methodCall, result)
+            }
+            "buildCustomRouteFromJsonString" -> {
+                this.buildCustomRouteFromJsonString(methodCall, result)
             }
             "clearRoute" -> {
                 this.clearRoute(methodCall, result)
@@ -152,6 +164,107 @@ open class TurnByTurn(
         this.getRoute(this.context)
         result.success(true)
     }
+
+    private fun buildCustomRouteFromJsonString(methodCall: MethodCall, result: MethodChannel.Result) {
+        this.isNavigationCanceled = false
+        val arguments = methodCall.arguments as? Map<*, *>
+        if (arguments != null) this.setOptions(arguments)
+        this.addedWaypoints.clear()
+        val points = arguments?.get("wayPoints") as HashMap<*, *>
+        for (item in points) {
+            val point = item.value as HashMap<*, *>
+            val latitude = point["Latitude"] as Double
+            val longitude = point["Longitude"] as Double
+            val isSilent = true // point["IsSilent"] as Boolean
+            this.addedWaypoints.add(Waypoint(Point.fromLngLat(longitude, latitude),isSilent))
+        }
+        println("KOTLIN HAS " + points.size + " WAYPOINTS")
+
+        val emptyPoints : List<Point> = listOf();
+
+        val routeOptions = RouteOptions
+            .builder()
+            .applyDefaultNavigationOptions()
+//            .applyDefaultNavigationOptions(navigationMode)
+            .coordinatesList(this.addedWaypoints.coordinatesList())
+            .waypointIndicesList(this.addedWaypoints.waypointsIndices())
+            .waypointNamesList(this.addedWaypoints.waypointsNames())
+
+            .steps(true)
+            .bannerInstructions(true)
+            .language("it")
+            .roundaboutExits(true)
+            .voiceInstructions(true)
+            // .voiceUnits(navigationVoiceUnits) ??
+//            .bannerInstructions(bannerInstructionsEnabled)
+//            .voiceInstructions(voiceInstructionsEnabled)
+            .build();
+
+        val jsonString = arguments?.get("jsonString") as String
+
+        val response: MapMatchingResponse = MapMatchingResponse.fromJson(jsonString)
+        val mapMatchingMatching = response.matchings()
+        mapMatchingMatching?.let { matchingList ->
+            val matching : MapMatchingMatching = matchingList[0]
+            val directionsRoute : DirectionsRoute = matching.toDirectionRoute()
+
+            val myDirectionsRoute : DirectionsRoute = directionsRoute.toBuilder()
+                .routeIndex("0")
+                .routeOptions(routeOptions)
+                .requestUuid("PwKdMwkJawckcptgwAtACMsPlqSMz4nACTPFOeET9LQsiwxj2bmlfA==") // TODO parse from JSON directionsRoute.requestUuid()
+                .build();
+
+            println(myDirectionsRoute.requestUuid())
+            println(myDirectionsRoute.routeOptions()?.language())
+            println(myDirectionsRoute.routeIndex())
+            println(matching.confidence())
+
+            val routerOrigin : RouterOrigin = RouterOrigin.Custom()
+            val navigationRoute : NavigationRoute = myDirectionsRoute.toNavigationRoute(routerOrigin)
+
+            mapboxNavigation.setNavigationRoutes(
+                listOf(navigationRoute),
+                0,
+                callback = object : RoutesSetCallback {
+                    override fun onRoutesSet(result: Expected<RoutesSetError, RoutesSetSuccess>) {
+                        println("I AM INSIDE of onRoutesSet() !!!!!!!!!!!!!!!!")
+                        val routes: List<NavigationRoute> = listOf(navigationRoute)
+                        this@TurnByTurn.currentRoutes = routes
+                        PluginUtilities.sendEvent(
+                            MapBoxEvents.ROUTE_BUILT,
+                            Gson().toJson(routes.map { it.directionsRoute.toJson() })
+                        )
+                        this@TurnByTurn.binding.navigationView.api.routeReplayEnabled(
+                            this@TurnByTurn.simulateRoute
+                        )
+                        this@TurnByTurn.binding.navigationView.api.startRoutePreview(routes)
+                        this@TurnByTurn.binding.navigationView.customizeViewBinders {
+                            this.infoPanelEndNavigationButtonBinder =
+                                CustomInfoPanelEndNavButtonBinder(activity)
+                        }
+                    }
+                }
+            )
+        }
+
+// java.lang.IllegalArgumentException: Provided DirectionsRoute has to have #routeIndex property set.
+// If the route was generated independently of Nav SDK,
+//     rebuild the object and assign the index based on the position in the response collection.
+
+// 	at com.mapbox.navigation.base.route.NavigationRouteEx.toNavigationRoute(NavigationRoute.kt:494)
+// 	at com.eopeter.fluttermapboxnavigation.TurnByTurn.buildCustomRouteFromJsonString(TurnByTurn.kt:217)
+
+        result.success(true)
+    }
+/*
+
+ java.lang.IllegalArgumentException: Provided DirectionsRoute has to have #routeOptions property set.
+ If the route was generated independently of Nav SDK, rebuild the object and assign the options based on the used request URL.
+
+ 	at com.eopeter.fluttermapboxnavigation.TurnByTurn.buildCustomRouteFromJsonString(TurnByTurn.kt:170)
+ 	at com.eopeter.fluttermapboxnavigation.TurnByTurn.onMethodCall(TurnByTurn.kt:111)
+
+ */
 
     private fun getRoute(context: Context) {
         MapboxNavigationApp.current()!!.requestRoutes(
