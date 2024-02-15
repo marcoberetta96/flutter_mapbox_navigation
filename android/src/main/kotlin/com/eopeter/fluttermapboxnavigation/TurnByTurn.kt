@@ -28,6 +28,7 @@ import com.mapbox.api.matching.v5.models.MapMatchingMatching
 import com.mapbox.api.matching.v5.models.MapMatchingResponse
 import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.Point
+import com.mapbox.geojson.Polygon
 import com.mapbox.maps.*
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.annotation.generated.*
@@ -49,11 +50,17 @@ import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
 import com.mapbox.navigation.core.trip.session.*
 import com.mapbox.navigation.dropin.infopanel.InfoPanelBinder
+import com.mapbox.navigation.ui.maps.camera.NavigationCamera
+import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
+import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
+import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
+import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
 import com.mapbox.navigation.ui.tripprogress.model.*
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.*
 
 open class TurnByTurn(
@@ -80,8 +87,8 @@ open class TurnByTurn(
             .attach(this.activity as LifecycleOwner)
 
         mapView = mv
-        mapView.compass.visibility = false
-        mapView.scalebar.enabled = false
+        mapView.compass.visibility = true
+        mapView.scalebar.enabled = true
         setOptions(arguments)
 
         registerObservers()
@@ -94,6 +101,9 @@ open class TurnByTurn(
         }
 
         Log.d("MARCO", "COMPLETED initNavigation")
+
+
+
     }
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
@@ -144,6 +154,9 @@ open class TurnByTurn(
             }
             "removePOIs" -> {
                 removePOIs(methodCall, result)
+            }
+            "centerCameraWholeRoute" -> {
+                centerCameraWholeRoute(methodCall, result)
             }
             else -> result.notImplemented()
         }
@@ -268,6 +281,7 @@ open class TurnByTurn(
  */
 
     private fun getRoute(context: Context) {
+        mapboxNavigation.startTripSession(withForegroundService = false)
         MapboxNavigationApp.current()!!.requestRoutes(
             routeOptions = RouteOptions
                 .builder()
@@ -345,65 +359,55 @@ open class TurnByTurn(
         }
     }
 
-    private fun zoomIn(methodCall: MethodCall, result: MethodChannel.Result) {
-
-        /*
-        TODO
-        val center = mapboxNavigation.camera.center
-        val zoom = mapboxNavigation.mapboxMap.cameraState.zoom
-        val zoom2 = mapboxNavigation.cameraState.zoom
-
-        println("--------||||||||||||||||||||||||||||  zoomIn() ")
-        println(center)
-        println(zoom)
-
-        // define camera position
-        val cameraPosition = CameraOptions.Builder()
-            .zoom(14.0)
-            .center(center)
-            .build()
-        // set camera position
-        mapView.mapboxMap.setCamera(cameraPosition)
-         */
-
-        result.success(true)
-    }
-
     private lateinit var mapViewForAnnotation: MapView
 
 
     open fun setMapViewForAnnotation(mv: MapView) {
         mapViewForAnnotation = mv
+
+        // NOT WORKING FROM HERE
+        /*
+        mapboxMap = mv.getMapboxMap()
+        // initialize Navigation Camera
+        viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
+        navigationCamera = NavigationCamera(
+            mapboxMap,
+            mv.camera,
+            viewportDataSource
+        )
+        // set the animations lifecycle listener to ensure the NavigationCamera stops
+        // automatically following the user location when the map is interacted with
+        mv.camera.addCameraAnimationsLifecycleListener(
+            NavigationBasicGesturesHandler(navigationCamera)
+        )
+        navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
+            println("INSIDE registerNavigationCameraStateChangeObserver " + navigationCameraState)
+            // shows/hide the recenter button depending on the camera state
+            // when (navigationCameraState) {
+            //     NavigationCameraState.TRANSITION_TO_FOLLOWING,
+            //     NavigationCameraState.FOLLOWING -> binding.recenter.visibility = View.INVISIBLE
+            //     NavigationCameraState.TRANSITION_TO_OVERVIEW,
+            //     NavigationCameraState.OVERVIEW,
+            //     NavigationCameraState.IDLE -> binding.recenter.visibility = View.INVISIBLE
+            // }
+        }
+        Log.d("MARCO", "COMPLETED initNavigation completed camera")
+         */
     }
 
     private fun addPOIs(methodCall: MethodCall, result: MethodChannel.Result) {
         val arguments = methodCall.arguments as? Map<*, *>
 
         if(arguments != null) {
-            val groupName = arguments["group"] as? String
-            val base64Image = arguments["icon"] as? String
-            var iconSize = arguments["iconSize"] as? Double
             val poiPoints = arguments["poi"] as? HashMap<*, *>
-            var poiImage: ByteArray? = null
-
-            base64Image?.let {
-                // Decode and use the image as needed
-                poiImage = android.util.Base64.decode(it, 0)
-            }
-
-            if(iconSize == null) {
-                iconSize = 0.2
-            }
-
-            val image = BitmapFactory.decodeByteArray(poiImage, 0, poiImage!!.size)
             this@TurnByTurn.currentPoiPoints = poiPoints
-            addPOIAnnotations(groupName!!, image, iconSize, poiPoints!!)
+            addPOIAnnotations(poiPoints!!)
             Log.d("MARCO", "completed addPOIs")
         }
         result.success(true)
     }
 
-    private fun addPOIAnnotations(groupName: String, poiImage: Bitmap, iconSize: Double, pois: HashMap<*, *>) {
+    private fun addPOIAnnotations(pois: HashMap<*, *>) {
         for (item in pois) {
             val poi = item.value as HashMap<*, *>
             val id = poi["Id"] as String
@@ -433,15 +437,70 @@ open class TurnByTurn(
     private fun removePOIs(methodCall: MethodCall, result: MethodChannel.Result) {
         val arguments = methodCall.arguments as? Map<*, *>
         if(arguments != null) {
-            val groupName = arguments["group"] as? String
-            removePOIsByGroupName(groupName!!)
+            // val groupName = arguments["group"] as? String
+            mapViewForAnnotation.viewAnnotationManager.removeAllViewAnnotations() // remove all
         }
         result.success(true)
     }
 
-    private fun removePOIsByGroupName(groupName: String) {
-        // REMOVE ALL
-        mapViewForAnnotation.viewAnnotationManager.removeAllViewAnnotations()
+    private fun centerCameraWholeRoute(methodCall: MethodCall, result: MethodChannel.Result) {
+
+        // NOT WORKING
+        /*
+        println("MARCO: SET CAMERA  from  " + navigationCamera.state)
+        if (navigationCamera.state == NavigationCameraState.FOLLOWING)
+            navigationCamera.requestNavigationCameraToOverview()
+        else
+            navigationCamera.requestNavigationCameraToFollowing()
+        return
+        val coordinates = listOf(
+            Point.fromLngLat(8.39005, 45.85317),
+            Point.fromLngLat(8.18951, 45.46427),
+            )
+        println(mapboxMap.cameraState.center)
+        val cameraPosition = mapboxMap.cameraForCoordinates(coordinates, EdgeInsets(1.0, 1.0, 1.0, 1.0))
+        mapboxMap.setCamera(cameraPosition)
+        println("MARCO: SET CAMERA")
+        println(cameraPosition)
+        println(mapboxMap)
+        println(mapboxMap.cameraState.center)
+        return
+        println("MARCO: SET CAMERA 3")
+        navigationCamera.requestNavigationCameraToFollowing()
+        println("MARCO: SET CAMERA 4")
+        navigationCamera.requestNavigationCameraToOverview(
+            stateTransitionOptions = NavigationCameraTransitionOptions.Builder()
+                .maxDuration(0) // instant transition
+                .build()
+        )
+        */
+
+        result.success(true)
+    }
+
+
+    private fun zoomIn(methodCall: MethodCall, result: MethodChannel.Result) {
+
+        /*
+        TODO
+        val center = mapboxNavigation.camera.center
+        val zoom = mapboxNavigation.mapboxMap.cameraState.zoom
+        val zoom2 = mapboxNavigation.cameraState.zoom
+
+        println("--------||||||||||||||||||||||||||||  zoomIn() ")
+        println(center)
+        println(zoom)
+
+        // define camera position
+        val cameraPosition = CameraOptions.Builder()
+            .zoom(14.0)
+            .center(center)
+            .build()
+        // set camera position
+        mapView.mapboxMap.setCamera(cameraPosition)
+         */
+
+        result.success(true)
     }
 
     @SuppressLint("MissingPermission")
@@ -634,6 +693,15 @@ open class TurnByTurn(
     private lateinit var mapboxNavigation: MapboxNavigation
 
     private lateinit var mapboxMap: MapboxMap
+    /**
+     * Used to execute camera transitions based on the data generated by the [viewportDataSource].
+     * This includes transitions from route overview to route following and continuously updating the camera as the location changes.
+     */
+    private lateinit var navigationCamera: NavigationCamera
+    /**
+     * Produces the camera frames based on the location and routing data for the [navigationCamera] to execute.
+     */
+    private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
 
     private lateinit var mapView: MapView
     private var currentPoiPoints: HashMap<*, *>? = null
@@ -654,11 +722,10 @@ open class TurnByTurn(
         override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
             val location: Location = locationMatcherResult.enhancedLocation;
             this@TurnByTurn.lastLocation = location
-            println("MARCO: got new location from locationObserver")
-            println("LAT = " + location.latitude)
-            println("LON = " + location.longitude)
-
-            println("currentPoiPoints = ${this@TurnByTurn.currentPoiPoints}")
+            // println("MARCO: got new location from locationObserver")
+            // println("LAT = " + location.latitude)
+            // println("LON = " + location.longitude)
+            // println("currentPoiPoints = ${this@TurnByTurn.currentPoiPoints}")
             if(this@TurnByTurn.currentPoiPoints == null) return
 
             for (item in this@TurnByTurn.currentPoiPoints!!) {
@@ -672,11 +739,11 @@ open class TurnByTurn(
                     latitude.toString().toDouble(),
                     longitude.toString().toDouble(),
                 )
-                println("DISTANCE = $distance")
-                println("POI = $id")
+                // println("DISTANCE = $distance")
+                // println("POI = $id")
 
                 // POI is near
-                if(distance < 100) {
+                if(distance < 70) {
                     if(id in this@TurnByTurn.nearPoiIds) return;
                     println("ADDING POI$id")
                     this@TurnByTurn.nearPoiIds.add(id)
@@ -749,6 +816,8 @@ open class TurnByTurn(
     private val arrivalObserver: ArrivalObserver = object : ArrivalObserver {
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
             PluginUtilities.sendEvent(MapBoxEvents.ON_ARRIVAL)
+            val navigation = MapboxNavigationApp.current()
+            navigation?.stopTripSession()
         }
 
         override fun onNextRouteLegStart(routeLegProgress: RouteLegProgress) {

@@ -196,6 +196,12 @@ class MapBoxNavigationViewController {
         .then<bool>((dynamic result) => result as bool);
   }
 
+  Future<bool> centerCameraWholeRoute() async {
+    return await _methodChannel
+        .invokeMethod('centerCameraWholeRoute')
+        .then<bool>((dynamic result) => result as bool);
+  }
+
   /// starts listening for events
   Future<void> initialize() async {
     _routeEventSubscription = _streamRouteEvent!.listen(_onProgressData);
