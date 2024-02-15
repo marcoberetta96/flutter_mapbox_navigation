@@ -54,7 +54,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.*
-
+import kotlin.math.*
 
 open class TurnByTurn(
     ctx: Context,
@@ -396,17 +396,9 @@ open class TurnByTurn(
             }
 
             val image = BitmapFactory.decodeByteArray(poiImage, 0, poiImage!!.size)
+            this@TurnByTurn.currentPoiPoints = poiPoints
             addPOIAnnotations(groupName!!, image, iconSize, poiPoints!!)
             Log.d("MARCO", "completed addPOIs")
-        }
-        result.success(true)
-    }
-
-    private fun removePOIs(methodCall: MethodCall, result: MethodChannel.Result) {
-        val arguments = methodCall.arguments as? Map<*, *>
-        if(arguments != null) {
-            val groupName = arguments["group"] as? String
-            removePOIsByGroupName(groupName!!)
         }
         result.success(true)
     }
@@ -436,6 +428,15 @@ open class TurnByTurn(
                 tvLocation.text = text
             }
         }
+    }
+
+    private fun removePOIs(methodCall: MethodCall, result: MethodChannel.Result) {
+        val arguments = methodCall.arguments as? Map<*, *>
+        if(arguments != null) {
+            val groupName = arguments["group"] as? String
+            removePOIsByGroupName(groupName!!)
+        }
+        result.success(true)
     }
 
     private fun removePOIsByGroupName(groupName: String) {
@@ -635,6 +636,8 @@ open class TurnByTurn(
     private lateinit var mapboxMap: MapboxMap
 
     private lateinit var mapView: MapView
+    private var currentPoiPoints: HashMap<*, *>? = null
+    private var nearPoiIds: MutableList<String> = mutableListOf()
 
     /**
      * Bindings to the example layout.
@@ -649,12 +652,61 @@ open class TurnByTurn(
      */
     private val locationObserver = object : LocationObserver {
         override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
-            this@TurnByTurn.lastLocation = locationMatcherResult.enhancedLocation
+            val location: Location = locationMatcherResult.enhancedLocation;
+            this@TurnByTurn.lastLocation = location
+            println("MARCO: got new location from locationObserver")
+            println("LAT = " + location.latitude)
+            println("LON = " + location.longitude)
+
+            println("currentPoiPoints = ${this@TurnByTurn.currentPoiPoints}")
+            if(this@TurnByTurn.currentPoiPoints == null) return
+
+            for (item in this@TurnByTurn.currentPoiPoints!!) {
+                val poi = item.value as HashMap<*, *>
+                val id = poi["Id"] as String
+                val latitude = poi["Latitude"] as Double
+                val longitude = poi["Longitude"] as Double
+                val distance = meterDistanceBetweenPoints(
+                    location.latitude.toString().toDouble(),
+                    location.longitude.toString().toDouble(),
+                    latitude.toString().toDouble(),
+                    longitude.toString().toDouble(),
+                )
+                println("DISTANCE = $distance")
+                println("POI = $id")
+
+                // POI is near
+                if(distance < 100) {
+                    if(id in this@TurnByTurn.nearPoiIds) return;
+                    println("ADDING POI$id")
+                    this@TurnByTurn.nearPoiIds.add(id)
+                    PluginUtilities.sendEvent(MapBoxEvents.NEW_NEAR_POINT, id)
+                    return;
+                }
+
+                if(id !in this@TurnByTurn.nearPoiIds) return;
+                println("REMOVING POI$id")
+                this@TurnByTurn.nearPoiIds.remove(id)
+                PluginUtilities.sendEvent(MapBoxEvents.OLD_NEAR_POINT, id)
+            }
         }
 
         override fun onNewRawLocation(rawLocation: Location) {
             // no impl
         }
+    }
+
+    private fun meterDistanceBetweenPoints(latA: Double, lngA: Double, latB: Double, lngB: Double): Double {
+        val pk = (180f / Math.PI).toString().toDouble()
+        val a1 = latA / pk
+        val a2 = lngA / pk
+        val b1 = latB / pk
+        val b2 = lngB / pk
+        val t1: Double = cos(a1) * cos(a2) * cos(b1) * cos(b2)
+        val t2: Double = cos(a1) * sin(a2) * cos(b1) * sin(b2)
+        val t3: Double = sin(a1) * sin(b1)
+        val tt: Double = acos(t1 + t2 + t3)
+        return 6366000 * tt
     }
 
     private val bannerInstructionObserver = BannerInstructionsObserver { bannerInstructions ->
@@ -681,15 +733,13 @@ open class TurnByTurn(
      * Gets notified with progress along the currently active route.
      */
     private val routeProgressObserver = RouteProgressObserver { routeProgress ->
-        // update flutter events
         if (!this.isNavigationCanceled) {
             try {
 
                 this.distanceRemaining = routeProgress.distanceRemaining
                 this.durationRemaining = routeProgress.durationRemaining
 
-                val progressEvent = MapBoxRouteProgressEvent(routeProgress)
-                PluginUtilities.sendEvent(progressEvent)
+                PluginUtilities.sendEvent(MapBoxRouteProgressEvent(routeProgress))
             } catch (_: java.lang.Exception) {
                 // handle this error
             }

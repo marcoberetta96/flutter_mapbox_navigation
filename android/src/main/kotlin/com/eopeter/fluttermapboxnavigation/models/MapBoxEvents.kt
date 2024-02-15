@@ -23,5 +23,7 @@ enum class MapBoxEvents(val value: String) {
     REROUTE_ALONG("reroute_along"),
     ON_MAP_TAP("on_map_tap"),
     ANNOTATION_TAPPED("annotation_tapped"),
-    MAP_POSITION_CHANGED("map_position_changed")
+    MAP_POSITION_CHANGED("map_position_changed"),
+    NEW_NEAR_POINT("new_near_point"),
+    OLD_NEAR_POINT("old_near_point")
 }
