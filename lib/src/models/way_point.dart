@@ -7,6 +7,7 @@ class WayPoint {
   ///Constructor
   WayPoint({
     required this.name,
+    required this.text,
     required this.latitude,
     required this.longitude,
     this.isSilent = false,
@@ -16,6 +17,7 @@ class WayPoint {
   /// create [WayPoint] from a json
   WayPoint.fromJson(Map<String, dynamic> json) {
     name = json['name'] as String?;
+    text = json['text'] as String?;
     latitude = (json['latitude'] is String)
         ? double.tryParse(json['latitude'] as String)
         : json['latitude'] as double?;
@@ -35,6 +37,9 @@ class WayPoint {
 
   /// Waypoint [name]
   String? name;
+
+  /// Waypoint [text]
+  String? text;
 
   /// Waypoint latitude
   double? latitude;

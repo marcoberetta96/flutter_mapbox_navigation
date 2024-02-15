@@ -161,6 +161,7 @@ class MapBoxNavigationViewController {
         "Order": i,
         "Id": wayPoint.id,
         "Name": wayPoint.name,
+        "Text": wayPoint.text,
         "Latitude": wayPoint.latitude,
         "Longitude": wayPoint.longitude,
       };

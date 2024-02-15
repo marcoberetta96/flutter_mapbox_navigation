@@ -29,6 +29,7 @@ import com.mapbox.api.matching.v5.models.MapMatchingResponse
 import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
+import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.annotation.generated.*
 import com.mapbox.maps.plugin.compass.compass
 import com.mapbox.maps.plugin.scalebar.scalebar
@@ -344,6 +345,30 @@ open class TurnByTurn(
         }
     }
 
+    private fun zoomIn(methodCall: MethodCall, result: MethodChannel.Result) {
+
+        /*
+        TODO
+        val center = mapboxNavigation.camera.center
+        val zoom = mapboxNavigation.mapboxMap.cameraState.zoom
+        val zoom2 = mapboxNavigation.cameraState.zoom
+
+        println("--------||||||||||||||||||||||||||||  zoomIn() ")
+        println(center)
+        println(zoom)
+
+        // define camera position
+        val cameraPosition = CameraOptions.Builder()
+            .zoom(14.0)
+            .center(center)
+            .build()
+        // set camera position
+        mapView.mapboxMap.setCamera(cameraPosition)
+         */
+
+        result.success(true)
+    }
+
     private lateinit var mapViewForAnnotation: MapView
 
 
@@ -390,17 +415,16 @@ open class TurnByTurn(
         for (item in pois) {
             val poi = item.value as HashMap<*, *>
             val id = poi["Id"] as String
-            val name = poi["Name"] as String
+            // val name = poi["Name"] as String
+            val text = poi["Text"] as String
             val latitude = poi["Latitude"] as Double
             val longitude = poi["Longitude"] as Double
-
-            Log.d("MARCO", "DEBUG XXXXXX")
             val coordinate = Point.fromLngLat(longitude, latitude)
             val viewAnnotation = mapViewForAnnotation.viewAnnotationManager.addViewAnnotation(
                 resId = R.layout.mapbox_item_view_annotation,
                 options = viewAnnotationOptions {
                     geometry(coordinate)
-                    offsetY(170)
+                    // offsetY(170)
                 },
             )
             viewAnnotation.setOnClickListener { b ->
@@ -409,7 +433,7 @@ open class TurnByTurn(
             }
             MapboxItemViewAnnotationBinding.bind(viewAnnotation).apply {
                 tvLocation.clipToOutline = false
-                tvLocation.text = name
+                tvLocation.text = text
             }
         }
     }
