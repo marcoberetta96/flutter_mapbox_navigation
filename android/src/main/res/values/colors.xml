@@ -2,8 +2,22 @@
 <resources>
     <color name="colorPrimary">#0095FF</color>
     <color name="colorPrimaryDark">#0095FF</color>
+    <color name="colorPrimaryVariant">#0095FF</color>
+    <color name="colorSecondary">#0095FF</color>
+    <color name="colorSecondaryDark">#0095FF</color>
+    <color name="colorSecondaryVariant">#0095FF</color>
     <color name="colorAccent">#0095FF</color>
     <color name="ic_launcher_background">#0095FF</color>
+
+
+
+    <color name="colorSurface">@color/red</color>
+    <color name="colorOnSecondary">@color/orange</color>
+    <color name="colorOnSecondaryVariant">@color/orange</color>
+    <color name="colorOnSurface">@color/orange</color>
+
+
+
     <color name="red">#FF0000</color>
     <color name="orange">#FEAD29</color>
     <color name="white">#FFFFFF</color>
