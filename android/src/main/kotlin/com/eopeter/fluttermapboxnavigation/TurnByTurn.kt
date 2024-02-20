@@ -21,6 +21,7 @@ import com.eopeter.fluttermapboxnavigation.models.WaypointSet
 import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelEndNavButtonBinder
 import com.eopeter.fluttermapboxnavigation.utilities.PluginUtilities
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -726,8 +727,18 @@ open class TurnByTurn(
             // println("LAT = " + location.latitude)
             // println("LON = " + location.longitude)
             // println("currentPoiPoints = ${this@TurnByTurn.currentPoiPoints}")
-            if(this@TurnByTurn.currentPoiPoints == null) return
 
+            // Send NEW_LOCATION event
+            val json = JsonObject()
+            json.addProperty("latitude", location.latitude)
+            json.addProperty("longitude", location.longitude)
+            json.addProperty("altitude", location.altitude)
+            json.addProperty("speed", location.speed)
+            json.addProperty("bearing", location.bearing)
+            PluginUtilities.sendEvent(MapBoxEvents.NEW_LOCATION, json.toString())
+
+            // Search for current near waypoints
+            if(this@TurnByTurn.currentPoiPoints == null) return
             for (item in this@TurnByTurn.currentPoiPoints!!) {
                 val poi = item.value as HashMap<*, *>
                 val id = poi["Id"] as String
@@ -751,6 +762,7 @@ open class TurnByTurn(
                     return;
                 }
 
+                // POI is not near
                 if(id !in this@TurnByTurn.nearPoiIds) return;
                 println("REMOVING POI$id")
                 this@TurnByTurn.nearPoiIds.remove(id)
@@ -759,6 +771,7 @@ open class TurnByTurn(
         }
 
         override fun onNewRawLocation(rawLocation: Location) {
+            println("MARCO: onNewRawLocation: " + rawLocation)
             // no impl
         }
     }

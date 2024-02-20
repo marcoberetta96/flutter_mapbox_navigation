@@ -24,6 +24,7 @@ enum MapBoxEvent {
   reroute_along,
   on_map_tap,
   annotation_tapped,
+  new_location,
   new_near_point,
   old_near_point
 }
