@@ -799,7 +799,7 @@ open class TurnByTurn(
 
     private val offRouteObserver = OffRouteObserver { offRoute ->
         if (offRoute) {
-            PluginUtilities.sendEvent(MapBoxEvents.USER_OFF_ROUTE)
+            // PluginUtilities.sendEvent(MapBoxEvents.USER_OFF_ROUTE)
         }
     }
 
