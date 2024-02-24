@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -56,6 +57,11 @@ import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSou
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
 import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
+import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
+import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
+import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import com.mapbox.navigation.ui.tripprogress.model.*
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -76,6 +82,7 @@ open class TurnByTurn(
     open fun initFlutterChannelHandlers() {
         this.methodChannel?.setMethodCallHandler(this)
         this.eventChannel?.setStreamHandler(this)
+        Log.d("MARCO", "COMPLETED initFlutterChannelHandlers")
     }
 
     open fun initNavigation(mv: MapView, arguments: Map<*, *>) {
@@ -102,9 +109,6 @@ open class TurnByTurn(
         }
 
         Log.d("MARCO", "COMPLETED initNavigation")
-
-
-
     }
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
@@ -194,9 +198,6 @@ open class TurnByTurn(
             this.addedWaypoints.add(Waypoint(Point.fromLngLat(longitude, latitude),isSilent))
         }
         println("KOTLIN HAS " + points.size + " WAYPOINTS")
-
-        val emptyPoints : List<Point> = listOf();
-
         val routeOptions = RouteOptions
             .builder()
             .applyDefaultNavigationOptions()
@@ -204,7 +205,6 @@ open class TurnByTurn(
             .coordinatesList(this.addedWaypoints.coordinatesList())
             .waypointIndicesList(this.addedWaypoints.waypointsIndices())
             .waypointNamesList(this.addedWaypoints.waypointsNames())
-
             .steps(true)
             .bannerInstructions(true)
             .language("it")
@@ -216,19 +216,16 @@ open class TurnByTurn(
             .build();
 
         val jsonString = arguments?.get("jsonString") as String
-
         val response: MapMatchingResponse = MapMatchingResponse.fromJson(jsonString)
         val mapMatchingMatching = response.matchings()
         mapMatchingMatching?.let { matchingList ->
             val matching : MapMatchingMatching = matchingList[0]
             val directionsRoute : DirectionsRoute = matching.toDirectionRoute()
-
             val myDirectionsRoute : DirectionsRoute = directionsRoute.toBuilder()
                 .routeIndex("0")
                 .routeOptions(routeOptions)
                 .requestUuid("PwKdMwkJawckcptgwAtACMsPlqSMz4nACTPFOeET9LQsiwxj2bmlfA==") // TODO parse from JSON directionsRoute.requestUuid()
                 .build();
-
             println(myDirectionsRoute.requestUuid())
             println(myDirectionsRoute.routeOptions()?.language())
             println(myDirectionsRoute.routeIndex())
@@ -365,6 +362,7 @@ open class TurnByTurn(
 
     open fun setMapViewForAnnotation(mv: MapView) {
         mapViewForAnnotation = mv
+        Log.d("MARCO", "COMPLETED setMapViewForAnnotation")
 
         // NOT WORKING FROM HERE
         /*
@@ -398,7 +396,6 @@ open class TurnByTurn(
 
     private fun addPOIs(methodCall: MethodCall, result: MethodChannel.Result) {
         val arguments = methodCall.arguments as? Map<*, *>
-
         if(arguments != null) {
             val poiPoints = arguments["poi"] as? HashMap<*, *>
             this@TurnByTurn.currentPoiPoints = poiPoints
@@ -436,16 +433,15 @@ open class TurnByTurn(
     }
 
     private fun removePOIs(methodCall: MethodCall, result: MethodChannel.Result) {
-        val arguments = methodCall.arguments as? Map<*, *>
-        if(arguments != null) {
+        // val arguments = methodCall.arguments as? Map<*, *>
+        // if(arguments != null) {
             // val groupName = arguments["group"] as? String
-            mapViewForAnnotation.viewAnnotationManager.removeAllViewAnnotations() // remove all
-        }
+        mapViewForAnnotation.viewAnnotationManager.removeAllViewAnnotations() // remove all
+        // }
         result.success(true)
     }
 
     private fun centerCameraWholeRoute(methodCall: MethodCall, result: MethodChannel.Result) {
-
         // NOT WORKING
         /*
         println("MARCO: SET CAMERA  from  " + navigationCamera.state)
@@ -475,32 +471,24 @@ open class TurnByTurn(
                 .build()
         )
         */
-
         result.success(true)
     }
 
-
     private fun zoomIn(methodCall: MethodCall, result: MethodChannel.Result) {
-
         /*
-        TODO
         val center = mapboxNavigation.camera.center
         val zoom = mapboxNavigation.mapboxMap.cameraState.zoom
         val zoom2 = mapboxNavigation.cameraState.zoom
-
         println("--------||||||||||||||||||||||||||||  zoomIn() ")
         println(center)
         println(zoom)
-
         // define camera position
         val cameraPosition = CameraOptions.Builder()
             .zoom(14.0)
             .center(center)
             .build()
         // set camera position
-        mapView.mapboxMap.setCamera(cameraPosition)
-         */
-
+        mapView.mapboxMap.setCamera(cameraPosition)         */
         result.success(true)
     }
 
@@ -557,9 +545,25 @@ open class TurnByTurn(
         if (this.mapStyleUrlDay == null) this.mapStyleUrlDay = Style.MAPBOX_STREETS
         if (this.mapStyleUrlNight == null) this.mapStyleUrlNight = Style.DARK
 
+        // Differentiate the route traveled (https://docs.mapbox.com/android/navigation/v2/guides/ui-components/route-line/#differentiate-the-route-traveled)
+        val customColorResources = RouteLineColorResources.Builder()
+            // .routeDefaultColor(Color.parseColor("#FFCC00"))
+            .routeLineTraveledColor(Color.parseColor("#f9e1b2"))
+            .build()
+        val routeLineResources = RouteLineResources.Builder()
+            .routeLineColorResources(customColorResources)
+            .build()
+        val myRouteLineOptions = MapboxRouteLineOptions.Builder(this.context)
+            .withVanishingRouteLineEnabled(true)
+            .vanishingRouteLineUpdateInterval(3)
+            .withRouteLineResources(routeLineResources)
+            .build()
+
+
         this@TurnByTurn.binding.navigationView.customizeViewOptions {
             mapStyleUriDay = this@TurnByTurn.mapStyleUrlDay
             mapStyleUriNight = this@TurnByTurn.mapStyleUrlNight
+            routeLineOptions = myRouteLineOptions
         }
 
         this.initialLatitude = arguments["initialLatitude"] as? Double
@@ -771,7 +775,6 @@ open class TurnByTurn(
         }
 
         override fun onNewRawLocation(rawLocation: Location) {
-            println("MARCO: onNewRawLocation: " + rawLocation)
             // no impl
         }
     }
