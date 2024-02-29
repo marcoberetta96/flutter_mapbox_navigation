@@ -23,6 +23,9 @@ import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelEndNavButton
 import com.eopeter.fluttermapboxnavigation.utilities.PluginUtilities
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.location.LocationEngineRequest
+import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -108,8 +111,45 @@ open class TurnByTurn(
             infoPanelBinder = CustomInfoPanelBinder()
         }
 
+
+        Log.d("MARCO", "initNavigation BREAKPOINT 1")
+
+        if (!PermissionsManager.areLocationPermissionsGranted(this.context)) {
+            Log.d("MARCO", "initNavigation BREAKPOINT 2")
+            PermissionsManager(null).requestLocationPermissions(this.activity);
+            Log.d("MARCO", "initNavigation BREAKPOINT 3")
+        }
+        Log.d("MARCO", "initNavigation BREAKPOINT 4")
+        initializeLocationEngine();
+        Log.d("MARCO", "initNavigation BREAKPOINT 5")
+        // TODO initializeLocationLayer();
+        Log.d("MARCO", "initNavigation BREAKPOINT 6")
+
+
+
         Log.d("MARCO", "COMPLETED initNavigation")
     }
+
+
+
+    private fun initializeLocationEngine() {
+        /*
+        LocationEngineRequest.
+        locationEngine = new LocationEngineProvider(this).obtainBestLocationEngineAvailable();
+        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
+        locationEngine.activate();
+        Location prevlok=locationEngine.getLastLocation();
+        if(prevlok!=null){
+            lokation=prevlok;
+            setCamera(prevlok);
+        }else{
+            locationEngine.addLocationEngineListener(this);
+        }
+         */
+    }
+
+
+
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
         override fun onCreateLayout(layoutInflater: LayoutInflater, root: ViewGroup): ViewGroup {
@@ -294,6 +334,8 @@ open class TurnByTurn(
                 .voiceUnits(navigationVoiceUnits)
                 .bannerInstructions(bannerInstructionsEnabled)
                 .voiceInstructions(voiceInstructionsEnabled)
+                .enableRefresh(true)
+                .radiuses("1")
                 .build(),
             callback = object : NavigationRouterCallback {
                 override fun onRoutesReady(routes: List<NavigationRoute>, routerOrigin: RouterOrigin) {
