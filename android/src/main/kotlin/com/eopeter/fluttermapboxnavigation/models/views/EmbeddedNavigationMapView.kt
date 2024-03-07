@@ -56,7 +56,7 @@ class EmbeddedNavigationMapView(
 
     open fun initialize() {
         initFlutterChannelHandlers()
-        initNavigation(mapView, arguments)
+        initNavigation(mapView, arguments) // TODO move below?
 
         if(!(this.arguments?.get("longPressDestinationEnabled") as Boolean)) {
             this.binding.navigationView.customizeViewOptions {
@@ -80,6 +80,11 @@ class EmbeddedNavigationMapView(
             speedLimitBinder = viewBinder
             // actionButtonsBinder = viewBinder
         }
+
+
+
+        // initNavigation(mapView, arguments)
+
     }
 
     private val mapViewObserver = object : MapViewObserver() {

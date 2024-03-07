@@ -104,52 +104,19 @@ open class TurnByTurn(
 
         registerObservers()
         mapboxNavigation = MapboxNavigationApp.current()!!
-        mapboxNavigation.startTripSession(withForegroundService = false)
+        mapboxNavigation.startTripSession(withForegroundService = false) // TODO true?
 
         // Hide info panel
         binding.navigationView.customizeViewBinders {
             infoPanelBinder = CustomInfoPanelBinder()
         }
 
-
-        Log.d("MARCO", "initNavigation BREAKPOINT 1")
-
         if (!PermissionsManager.areLocationPermissionsGranted(this.context)) {
-            Log.d("MARCO", "initNavigation BREAKPOINT 2")
             PermissionsManager(null).requestLocationPermissions(this.activity);
-            Log.d("MARCO", "initNavigation BREAKPOINT 3")
         }
-        Log.d("MARCO", "initNavigation BREAKPOINT 4")
-        initializeLocationEngine();
-        Log.d("MARCO", "initNavigation BREAKPOINT 5")
-        // TODO initializeLocationLayer();
-        Log.d("MARCO", "initNavigation BREAKPOINT 6")
-
-
 
         Log.d("MARCO", "COMPLETED initNavigation")
     }
-
-
-
-    private fun initializeLocationEngine() {
-        /*
-        LocationEngineRequest.
-        locationEngine = new LocationEngineProvider(this).obtainBestLocationEngineAvailable();
-        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
-        locationEngine.activate();
-        Location prevlok=locationEngine.getLastLocation();
-        if(prevlok!=null){
-            lokation=prevlok;
-            setCamera(prevlok);
-        }else{
-            locationEngine.addLocationEngineListener(this);
-        }
-         */
-    }
-
-
-
 
     class CustomInfoPanelBinder : InfoPanelBinder() {
         override fun onCreateLayout(layoutInflater: LayoutInflater, root: ViewGroup): ViewGroup {
@@ -335,7 +302,6 @@ open class TurnByTurn(
                 .bannerInstructions(bannerInstructionsEnabled)
                 .voiceInstructions(voiceInstructionsEnabled)
                 .enableRefresh(true)
-                .radiuses("1")
                 .build(),
             callback = object : NavigationRouterCallback {
                 override fun onRoutesReady(routes: List<NavigationRoute>, routerOrigin: RouterOrigin) {
@@ -349,9 +315,9 @@ open class TurnByTurn(
                     )
                     this@TurnByTurn.binding.navigationView.api.startRoutePreview(routes)
                     this@TurnByTurn.binding.navigationView.customizeViewBinders {
-                        this.infoPanelEndNavigationButtonBinder =
-                            CustomInfoPanelEndNavButtonBinder(activity)
+                        this.infoPanelEndNavigationButtonBinder = CustomInfoPanelEndNavButtonBinder(activity)
                     }
+                    Log.d("MARCO", "Route should be set right now")
                 }
                 override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {
                     PluginUtilities.sendEvent(MapBoxEvents.ROUTE_BUILD_FAILED)
@@ -400,7 +366,6 @@ open class TurnByTurn(
     }
 
     private lateinit var mapViewForAnnotation: MapView
-
 
     open fun setMapViewForAnnotation(mv: MapView) {
         mapViewForAnnotation = mv
@@ -542,6 +507,7 @@ open class TurnByTurn(
         }
         this.binding.navigationView.api.startActiveGuidance(this.currentRoutes!!)
         PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_RUNNING)
+        Log.d("MARCO", "Route should be running right now")
     }
 
     private fun finishNavigation(isOffRouted: Boolean = false) {
@@ -597,7 +563,7 @@ open class TurnByTurn(
             .build()
         val myRouteLineOptions = MapboxRouteLineOptions.Builder(this.context)
             .withVanishingRouteLineEnabled(true)
-            .vanishingRouteLineUpdateInterval(3)
+            .vanishingRouteLineUpdateInterval(1)
             .withRouteLineResources(routeLineResources)
             .build()
 
@@ -615,47 +581,38 @@ open class TurnByTurn(
         if (zm != null) {
             this.zoom = zm
         }
-
         val br = arguments["bearing"] as? Double
         if (br != null) {
             this.bearing = br
         }
-
         val tt = arguments["tilt"] as? Double
         if (tt != null) {
             this.tilt = tt
         }
-
         val optim = arguments["isOptimized"] as? Boolean
         if (optim != null) {
             this.isOptimized = optim
         }
-
         val anim = arguments["animateBuildRoute"] as? Boolean
         if (anim != null) {
             this.animateBuildRoute = anim
         }
-
         val altRoute = arguments["alternatives"] as? Boolean
         if (altRoute != null) {
             this.alternatives = altRoute
         }
-
         val voiceEnabled = arguments["voiceInstructionsEnabled"] as? Boolean
         if (voiceEnabled != null) {
             this.voiceInstructionsEnabled = voiceEnabled
         }
-
         val bannerEnabled = arguments["bannerInstructionsEnabled"] as? Boolean
         if (bannerEnabled != null) {
             this.bannerInstructionsEnabled = bannerEnabled
         }
-
         val longPress = arguments["longPressDestinationEnabled"] as? Boolean
         if (longPress != null) {
             this.longPressDestinationEnabled = longPress
         }
-
         val onMapTap = arguments["enableOnMapTapCallback"] as? Boolean
         if (onMapTap != null) {
             this.enableOnMapTapCallback = onMapTap
@@ -688,7 +645,6 @@ open class TurnByTurn(
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
         FlutterMapboxNavigationPlugin.eventSink = events
     }
-
     override fun onCancel(arguments: Any?) {
         FlutterMapboxNavigationPlugin.eventSink = null
     }
@@ -769,10 +725,9 @@ open class TurnByTurn(
         override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
             val location: Location = locationMatcherResult.enhancedLocation;
             this@TurnByTurn.lastLocation = location
-            // println("MARCO: got new location from locationObserver")
+            println("MARCO: got new location from locationObserver")
             // println("LAT = " + location.latitude)
             // println("LON = " + location.longitude)
-            // println("currentPoiPoints = ${this@TurnByTurn.currentPoiPoints}")
 
             // Send NEW_LOCATION event
             val json = JsonObject()
@@ -860,10 +815,8 @@ open class TurnByTurn(
     private val routeProgressObserver = RouteProgressObserver { routeProgress ->
         if (!this.isNavigationCanceled) {
             try {
-
                 this.distanceRemaining = routeProgress.distanceRemaining
                 this.durationRemaining = routeProgress.durationRemaining
-
                 PluginUtilities.sendEvent(MapBoxRouteProgressEvent(routeProgress))
             } catch (_: java.lang.Exception) {
                 // handle this error
@@ -890,27 +843,21 @@ open class TurnByTurn(
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         Log.d("Embedded", "onActivityCreated not implemented")
     }
-
     override fun onActivityStarted(activity: Activity) {
         Log.d("Embedded", "onActivityStarted not implemented")
     }
-
     override fun onActivityResumed(activity: Activity) {
         Log.d("Embedded", "onActivityResumed not implemented")
     }
-
     override fun onActivityPaused(activity: Activity) {
         Log.d("Embedded", "onActivityPaused not implemented")
     }
-
     override fun onActivityStopped(activity: Activity) {
         Log.d("Embedded", "onActivityStopped not implemented")
     }
-
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
         Log.d("Embedded", "onActivitySaveInstanceState not implemented")
     }
-
     override fun onActivityDestroyed(activity: Activity) {
         Log.d("Embedded", "onActivityDestroyed not implemented")
     }
