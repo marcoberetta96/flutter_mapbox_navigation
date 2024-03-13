@@ -16,6 +16,7 @@ class WayPoint {
 
   /// create [WayPoint] from a json
   WayPoint.fromJson(Map<String, dynamic> json) {
+    id = json['id'] as String?;
     name = json['name'] as String?;
     text = json['text'] as String?;
     latitude = (json['latitude'] is String)
@@ -52,6 +53,6 @@ class WayPoint {
 
   @override
   String toString() {
-    return 'WayPoint{latitude: $latitude, longitude: $longitude}';
+    return 'WayPoint{id: $id, name: $name, latitude: $latitude, longitude: $longitude}';
   }
 }

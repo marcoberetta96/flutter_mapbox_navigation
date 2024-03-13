@@ -296,7 +296,7 @@ open class TurnByTurn(
                 .waypointIndicesList(this.addedWaypoints.waypointsIndices())
                 .waypointNamesList(this.addedWaypoints.waypointsNames())
                 .language(navigationLanguage)
-                .alternatives(alternatives)
+                .alternatives(false) // .alternatives(alternatives)
                 .steps(true)
                 .voiceUnits(navigationVoiceUnits)
                 .bannerInstructions(bannerInstructionsEnabled)
@@ -599,7 +599,7 @@ open class TurnByTurn(
         }
         val altRoute = arguments["alternatives"] as? Boolean
         if (altRoute != null) {
-            this.alternatives = altRoute
+            this.alternatives = false // altRoute
         }
         val voiceEnabled = arguments["voiceInstructionsEnabled"] as? Boolean
         if (voiceEnabled != null) {
@@ -679,7 +679,7 @@ open class TurnByTurn(
     private var distanceRemaining: Float? = null
     private var durationRemaining: Double? = null
 
-    private var alternatives = true
+    private var alternatives = false
 
     var allowsUTurnAtWayPoints = false
     var enableRefresh = false
@@ -751,8 +751,10 @@ open class TurnByTurn(
                     latitude.toString().toDouble(),
                     longitude.toString().toDouble(),
                 )
-                // println("DISTANCE = $distance")
-                // println("POI = $id")
+                println(id)
+                println(latitude)
+                println(longitude)
+                println("onNewLocationMatcherResult: POI_ID=$id   DISTANCE=$distance")
 
                 // POI is near
                 if(distance < 70) {
@@ -764,7 +766,7 @@ open class TurnByTurn(
                 }
 
                 // POI is not near
-                if(id !in this@TurnByTurn.nearPoiIds) return;
+                if(id !in this@TurnByTurn.nearPoiIds) continue;
                 println("REMOVING POI$id")
                 this@TurnByTurn.nearPoiIds.remove(id)
                 PluginUtilities.sendEvent(MapBoxEvents.OLD_NEAR_POINT, id)
