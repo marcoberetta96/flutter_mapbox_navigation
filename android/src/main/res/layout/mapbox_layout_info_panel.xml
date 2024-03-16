@@ -6,7 +6,7 @@
     android:layout_width="0dp"
     android:layout_height="0dp"
     android:layout_margin="10dp"
-    app:cardBackgroundColor="@color/orange"
+    app:cardBackgroundColor="@color/backColor"
     app:cardElevation="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -20,13 +20,13 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:background="@color/red" />
+            tools:background="@color/backColor" />
 
         <FrameLayout
             android:id="@+id/infoPanelContent"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            tools:background="@color/red"
+            tools:background="@color/backColor"
             tools:minHeight="200dp"
             app:layout_constraintTop_toBottomOf="@id/infoPanelHeader"
             app:layout_constraintEnd_toEndOf="parent"

@@ -10,15 +10,14 @@
     <color name="ic_launcher_background">#0095FF</color>
 
 
-
-    <color name="colorSurface">@color/red</color>
-    <color name="colorOnSecondary">@color/orange</color>
-    <color name="colorOnSecondaryVariant">@color/orange</color>
-    <color name="colorOnSurface">@color/orange</color>
-
-
+    <color name="colorSurface">@color/backColor</color>
+    <color name="colorOnSecondary">@color/backColor</color>
+    <color name="colorOnSecondaryVariant">@color/backColor</color>
+    <color name="colorOnSurface">@color/white</color>
 
     <color name="red">#FF0000</color>
     <color name="orange">#FEAD29</color>
     <color name="white">#FFFFFF</color>
+    <color name="backColor">#020B1A</color>
+
 </resources>
