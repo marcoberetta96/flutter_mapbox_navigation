@@ -212,6 +212,7 @@ open class TurnByTurn(
             .coordinatesList(this.addedWaypoints.coordinatesList())
             .waypointIndicesList(this.addedWaypoints.waypointsIndices())
             .waypointNamesList(this.addedWaypoints.waypointsNames())
+            .alternatives(false) // .alternatives(alternatives)
             .steps(true)
             .bannerInstructions(true)
             .language("it")
@@ -599,8 +600,9 @@ open class TurnByTurn(
         }
         val altRoute = arguments["alternatives"] as? Boolean
         if (altRoute != null) {
-            this.alternatives = false // altRoute
+            this.alternatives = altRoute
         }
+        this.alternatives = false
         val voiceEnabled = arguments["voiceInstructionsEnabled"] as? Boolean
         if (voiceEnabled != null) {
             this.voiceInstructionsEnabled = voiceEnabled

@@ -19,7 +19,7 @@ class MapBoxNavigation {
     tilt: 0,
     bearing: 0,
     enableRefresh: false,
-    alternatives: true,
+    alternatives: false,
     voiceInstructionsEnabled: true,
     bannerInstructionsEnabled: true,
     allowsUTurnAtWayPoints: true,
